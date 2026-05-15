@@ -3,324 +3,679 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dragon Boat Elite Lab</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
+    <title>3-Min Rowing Engine: Analytics Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --dragon-red: #ef4444;
-            --dragon-red-glow: rgba(239, 68, 68, 0.4);
-            --water-blue: #3b82f6;
-            --bg: #050505;
-            --card: #121212;
-            --text: #ffffff;
-            --text-dim: #737373;
-            --glass: rgba(255, 255, 255, 0.03);
+            --bg: #030712;
+            --card: #111827;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-purple: #a855f7;
+            --accent-gold: #f59e0b;
+            --text: #f9fafb;
+            --text-dim: #9ca3af;
             --border: rgba(255, 255, 255, 0.08);
         }
 
         * { box-sizing: border-box; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg); color: var(--text); padding: 15px; min-height: 100vh; display: flex; justify-content: center; }
+
+        .app-container { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 40px; }
+
+        header { text-align: center; padding: 5px 0; }
+        header h1 { margin: 0; font-size: 1.5rem; font-weight: 900; letter-spacing: 2px; color: var(--accent-red); }
+        header p { margin: 4px 0 0; font-size: 0.8rem; color: var(--text-dim); }
+
+        /* Navigation Tabs */
+        .tab-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 5px; }
+        .tab-btn { 
+            background: #1f2937; border: 1px solid var(--border); color: var(--text-dim); padding: 12px; 
+            border-radius: 12px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+        }
+        .tab-btn.active { background: var(--accent-red); color: white; border-color: var(--accent-red); }
+
+        .card { 
+            background: var(--card); border-radius: 24px; padding: 22px 18px; 
+            border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.4); 
+        }
+
+        .view-panel { display: none; flex-direction: column; gap: 15px; }
+        .view-panel.active { display: flex; }
+
+        /* Drag Selector Surprise Feature */
+        .drag-container { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 10px 15px; border-radius: 14px; border: 1px solid var(--border); font-size: 0.85rem; }
+        .drag-slider { flex: 1; margin: 0 15px; accent-color: var(--accent-blue); cursor: pointer; }
+        .drag-val { font-weight: 900; color: var(--accent-blue); font-size: 1rem; width: 30px; text-align: right; }
+
+        /* Selector Buttons */
+        .workout-selector { display: flex; flex-direction: column; gap: 8px; }
+        .select-btn { 
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border); color: white;
+            padding: 14px; border-radius: 16px; text-align: left; cursor: pointer; transition: 0.2s;
+        }
+        .select-btn:hover, .select-btn.active { background: rgba(239, 68, 68, 0.08); border-color: var(--accent-red); }
+        .select-btn h3 { margin: 0; font-size: 0.95rem; font-weight: 700; }
+        .select-btn p { margin: 4px 0 0; font-size: 0.75rem; color: var(--text-dim); }
+
+        /* Timer UI */
+        .timer-display { text-align: center; padding: 5px 0; position: relative; }
+        .timer-phase { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; color: var(--text-dim); }
+        .timer-clock { font-size: 5rem; font-weight: 900; font-family: monospace; line-height: 1; margin: 12px 0; }
+        .timer-cue { font-size: 0.9rem; color: var(--text-dim); font-style: italic; min-height: 40px; line-height: 1.4; padding: 0 10px; }
         
-        body { 
-            margin: 0; 
-            background: var(--bg); 
-            color: var(--text); 
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            background-image: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #050505 80%);
-        }
+        /* Metronome Visual Flasher Surprise */
+        .metronome-dot { width: 12px; height: 12px; background: var(--border); border-radius: 50%; display: inline-block; margin-top: 5px; transition: transform 0.1s ease; }
+        .metronome-dot.pulse { background: var(--accent-gold); transform: scale(1.3); box-shadow: 0 0 10px var(--accent-gold); }
+        .spm-badge { background: rgba(245, 158, 11, 0.15); color: var(--accent-gold); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 900; display: inline-block; margin-bottom: 8px; }
 
-        .app-container { 
-            width: 100%;
-            max-width: 480px; 
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+        /* Intervals Counter Visual */
+        .interval-counter { font-size: 0.8rem; color: var(--accent-purple); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
 
-        /* Header Area */
-        header { text-align: center; margin-bottom: 10px; }
-        header h1 { 
-            margin: 0; font-size: 1.1rem; letter-spacing: 5px; font-weight: 900; 
-            background: linear-gradient(to right, #fff, var(--dragon-red));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* Interface Inputs & Forms */
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+        .form-group label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; letter-spacing: 0.5px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        select, input { 
+            background: #1f2937 !important; border: 1px solid var(--border); color: white !important;
+            padding: 14px; font-size: 0.95rem; border-radius: 12px; outline: none; transition: 0.2s; width: 100%;
+            display: block; -webkit-appearance: none; appearance: none;
         }
+        select { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'><path stroke='%239ca3af' stroke-width='2' d='m1 1 4 4 4-4'/></svg>"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 35px; }
+        select:focus, input:focus { border-color: var(--accent-blue); background: #2d3748 !important; }
 
-        /* Session Progress */
-        .progress-container {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
-        .dot { 
-            height: 4px; flex: 1; background: #262626; border-radius: 10px; 
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
-        }
-        .dot.active { background: var(--dragon-red); box-shadow: 0 0 12px var(--dragon-red-glow); }
-        .dot.done { background: var(--text-dim); }
-
-        /* The Training Deck */
-        .workout-card { 
-            background: var(--card); 
-            border-radius: 35px; 
-            padding: 40px 25px; 
-            text-align: center; 
-            border: 1px solid var(--border);
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .station-badge { 
-            background: var(--glass);
-            color: var(--water-blue); 
-            font-size: 0.7rem; 
-            font-weight: 700; 
-            padding: 6px 14px;
-            border-radius: 100px;
-            border: 1px solid var(--border);
-            text-transform: uppercase;
-            display: inline-block;
-        }
-
-        .current-move { font-size: 2.8rem; margin: 20px 0 10px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
-        .technique-cue { color: var(--text-dim); font-size: 1rem; line-height: 1.5; margin-bottom: 30px; }
-
-        /* Modern Timer */
-        .timer-wrap { margin-bottom: 30px; }
-        .timer { 
-            font-size: 5rem; font-weight: 300; font-variant-numeric: tabular-nums; 
-            color: #fff; letter-spacing: -2px;
-        }
-
-        /* Action Buttons */
+        /* Buttons */
         .btn { 
-            width: 100%; padding: 22px; border-radius: 24px; border: none; font-size: 1.2rem; 
-            font-weight: 700; cursor: pointer; transition: 0.3s; 
+            width: 100%; padding: 18px; border-radius: 16px; border: none; font-size: 1rem; 
+            font-weight: 700; cursor: pointer; transition: 0.2s; text-align: center;
         }
-        .btn-main { 
-            background: var(--dragon-red); color: white; 
-            box-shadow: 0 10px 20px var(--dragon-red-glow);
-        }
-        .btn-main:active { transform: scale(0.97); filter: brightness(1.2); }
-        
-        .btn-log { 
-            background: #fff; color: #000; 
-            display: none;
-        }
+        .btn-main { background: var(--accent-red); color: white; box-shadow: 0 6px 15px rgba(239, 68, 68, 0.2); }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-secondary { background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); margin-top: 8px; }
+        .btn-action { background: var(--accent-blue); color: white; }
 
-        .btn-summary {
-            background: var(--water-blue); color: white;
-            display: none; margin-top: 20px;
-        }
+        /* Weekly Dashboard Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px; }
+        .stat-box { background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; position: relative; overflow: hidden; }
+        .stat-val { font-size: 1.6rem; font-weight: 900; color: var(--accent-purple); }
+        .stat-lbl { font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); margin-top: 4px; font-weight: 700; }
+        .rank-badge { font-size: 0.65rem; background: rgba(16, 185, 129, 0.15); color: var(--accent-green); padding: 2px 6px; border-radius: 6px; font-weight: 900; margin-top: 6px; display: inline-block; text-transform: uppercase; }
 
-        /* History List */
-        .log-section { margin-top: 10px; }
-        .log-header { font-size: 0.8rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 0 10px 10px; }
-        .history-card { background: var(--glass); border-radius: 20px; padding: 5px; border: 1px solid var(--border); }
-        .history-row { 
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; border-bottom: 1px solid var(--border); 
+        /* Performance Log Cards */
+        .log-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; padding-right: 2px; }
+        .log-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(255,255,255,0.01); padding: 12px 15px; border-radius: 14px; border: 1px solid var(--border);
         }
-        .history-row:last-child { border: none; }
-        .history-name { font-weight: 600; font-size: 0.95rem; }
-        .history-val { color: var(--water-blue); font-weight: 700; font-size: 1rem; }
+        .log-name { font-weight: 700; font-size: 0.9rem; }
+        .log-sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+        .log-meta { text-align: right; }
+        .log-score { color: var(--accent-blue); font-weight: 700; font-size: 1rem; }
+        .log-split { font-size: 0.75rem; color: var(--accent-green); font-weight: 500; margin-top: 2px; }
 
-        /* Modal Glass */
-        #logView { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            display: none; flex-direction: column; justify-content: center; padding: 40px; z-index: 100; 
-        }
-        #logView h2 { font-size: 0.9rem; text-transform: uppercase; color: var(--text-dim); text-align: center; }
-        input { 
-            background: transparent; border: none; border-bottom: 3px solid var(--dragon-red); color: white; 
-            padding: 20px; font-size: 4rem; text-align: center; margin: 20px 0; outline: none; width: 100%;
-            font-weight: 900;
-        }
+        /* Analytics Panel Styles */
+        .analytics-title { color: var(--accent-purple); font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+        .insights-box { background: rgba(168, 85, 247, 0.04); border: 1px dashed rgba(168, 85, 247, 0.3); border-radius: 14px; padding: 12px; margin-top: 10px; font-size: 0.8rem; line-height: 1.45; }
+        .insights-box strong { color: var(--text); }
+        .predictive-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; font-size: 0.75rem; color: var(--text-dim); }
+        .matrix-item span { font-weight: bold; color: var(--accent-blue); }
 
+        /* Modal Overlay Input */
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px);
+            display: none; flex-direction: column; justify-content: center; padding: 30px; z-index: 100;
+        }
+        .overlay h2 { text-align: center; font-size: 1rem; text-transform: uppercase; color: var(--text-dim); margin: 0; }
+        .overlay input { 
+            background: transparent !important; border: none !important; border-bottom: 3px solid var(--accent-red) !important; color: white !important;
+            width: 100%; font-size: 3.5rem; text-align: center; padding: 15px 0; outline: none; margin: 20px 0; font-weight: 900; border-radius: 0 !important;
+        }
+        .utility-row { display: flex; justify-content: space-between; font-size: 0.75rem; padding: 0 5px; color: var(--text-dim); margin-top: 5px; }
+        .utility-link { cursor: pointer; color: var(--accent-blue); text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <header><h1>PADDLE PRO ELITE</h1></header>
+    <header>
+        <h1>3-MIN ROWING ENGINE</h1>
+        <p>Rowing Ergometer Analytics Suite</p>
+    </header>
 
-    <div class="progress-container" id="dots"></div>
-
-    <div class="workout-card">
-        <div class="station-badge" id="typeLabel">Ready</div>
-        <div class="current-move" id="moveName">Elite Session</div>
-        <div class="technique-cue" id="cueText">Prepare for high-intensity dragon boat specific rotation.</div>
-
-        <div class="timer-wrap">
-            <div class="timer" id="timer">00:00.0</div>
-        </div>
-
-        <button class="btn btn-main" id="actionBtn" onclick="toggleTimer()">START PIECE</button>
-        <button class="btn btn-log" id="logBtn" onclick="openLog()">LOG DATA</button>
-        
-        <button class="btn btn-summary" id="summaryBtn" onclick="saveRecord()">SAVE & EXPORT RECORD</button>
+    <!-- Navigation Tabs -->
+    <div class="tab-nav">
+        <button class="tab-btn active" id="tabLive" onclick="switchView('live')">LIVE ENGINE LAB</button>
+        <button class="tab-btn" id="tabManual" onclick="switchView('manual')">RECORD WORKOUT</button>
     </div>
 
-    <div class="log-section">
-        <div class="log-header">Live Session Data</div>
-        <div class="history-card" id="historyBody">
-            <div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 0.9rem;">No data yet. Complete a piece.</div>
+    <!-- VIEW 1: LIVE CLOCK LAB -->
+    <div id="liveView" class="view-panel active">
+        
+        <!-- SURPRISE: Flywheel Damper Slider -->
+        <div class="drag-container">
+            <span>⚙️ Flywheel Damper (Drag Factor):</span>
+            <input type="range" min="1" max="10" value="5" class="drag-slider" id="damperSlider" oninput="updateDamperDisplay()">
+            <span class="drag-val" id="damperVal">5</span>
+        </div>
+
+        <div class="card" id="selectorCard">
+            <div class="workout-selector">
+                <button class="select-btn active" onclick="setWorkout(0, this)">
+                    <h3>1. Lactate Intervals</h3>
+                    <p>4 Rounds • 90s Work / 180s Automated Rest</p>
+                </button>
+                <button class="select-btn" onclick="setWorkout(1, this)">
+                    <h3>2. Over-Distance Base</h3>
+                    <p>3 Rounds • 5m Work / 120s Automated Rest</p>
+                </button>
+                <button class="select-btn" onclick="setWorkout(2, this)">
+                    <h3>3. Rate & Start Pyramid</h3>
+                    <p>3 Rounds • 3m Work / 240s Automated Rest</p>
+                </button>
+                <button class="select-btn" onclick="setWorkout(3, this)" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <h3 style="color: var(--accent-green);">4. 3-Minute Peak Test Day</h3>
+                    <p>Single Round • 3m Max Effort Rowing Assessment</p>
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="timer-display">
+                <div class="interval-counter" id="roundLabel">Round 1</div>
+                <div><span class="spm-badge" id="spmLabel">SPM Target: 24</span></div>
+                <div class="timer-phase" id="phaseLabel">Ready</div>
+                <div class="timer-clock" id="clockDisplay">01:30</div>
+                <div class="timer-cue" id="cueDisplay">Select your target protocol above, then take your grip on the handle.</div>
+                <!-- SURPRISE: Metronome Flasher Element -->
+                <div class="metronome-dot" id="metroDot"></div>
+            </div>
+            <button class="btn btn-main" id="primaryBtn" onclick="handlePrimaryAction()">LAUNCH PIECE</button>
+            <button class="btn btn-secondary" id="resetBtn" onclick="resetEngine()" style="display: none;">Reset Frame</button>
+        </div>
+    </div>
+
+    <!-- VIEW 2: MANUAL LOG & SPLIT LAB -->
+    <div id="manualView" class="view-panel">
+        <div class="card">
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; margin-bottom: 15px; letter-spacing: 0.5px;">Log Historical Workout</div>
+            
+            <div class="form-group">
+                <label for="manName">Target Routine</label>
+                <select id="manName">
+                    <option value="Lactate Intervals">Lactate Intervals</option>
+                    <option value="Over-Distance Base">Over-Distance Base</option>
+                    <option value="Rate & Start Pyramid">Rate & Start Pyramid</option>
+                    <option value="3-Min Max Test">3-Minute Max Test</option>
+                    <option value="Indoor Erg / Water Trial">Indoor Erg / Water Trial</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Distance Total (meters)</label>
+                    <input type="number" id="manDistance" placeholder="e.g. 850" inputmode="decimal">
+                </div>
+                <div class="form-group">
+                    <label>Duration / Time Used</label>
+                    <input type="text" id="manTime" placeholder="MM:SS (e.g. 03:00)">
+                </div>
+            </div>
+
+            <button class="btn btn-action" onclick="submitManualLog()">SAVE TO MASTER JOURNAL</button>
+        </div>
+    </div>
+
+    <!-- BIO-ENERGETIC SCIENCE INSIGHTS CARD WITH SURPRISE ESTIMATION MATRIX -->
+    <div class="card" id="insightsCard" style="display:none;">
+        <div class="analytics-title">🧬 Physiological Bio-Energetic Feedback</div>
+        <div class="insights-box" id="insightsDataContent">
+            Performance metrics mapped inside local system. Complete a session to populate evidence-based physiological profiles.
+        </div>
+        <!-- SURPRISE: Split Predictor Matrix -->
+        <div class="predictive-matrix">
+            <div class="matrix-item">Predicted 2K Cap: <span id="matrix2K">--:--.-</span></div>
+            <div class="matrix-item">Anaerobic Ceiling: <span id="matrixCeiling">--:--.-</span></div>
+        </div>
+    </div>
+
+    <!-- GLOBAL PERSISTENT JOURNAL TRACKER WITH SURPRISE ATHLETIC RANKING -->
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-val" id="weekMeters">0m</div>
+            <div class="stat-lbl">Weekly Distance</div>
+            <div><span class="rank-badge" id="rankBadge" style="color: var(--accent-purple);">Novice Crew</span></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-val" id="weekCount">0</div>
+            <div class="stat-lbl">Pieces Cleared</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; margin-bottom: 12px; letter-spacing: 1px;">Performance Logs</div>
+        <div class="log-list" id="historyLog">
+            <div style="text-align: center; color: var(--text-dim); padding: 15px; font-size: 0.85rem;">No historical records mapped inside device storage.</div>
+        </div>
+        <div class="utility-row">
+            <span class="utility-link" onclick="exportToCSV()">Export Ledger (CSV)</span>
+            <span class="utility-link" style="color:var(--accent-red)" onclick="clearLogs()">Wipe Database</span>
         </div>
     </div>
 </div>
 
-<div id="logView">
-    <h2 id="logTitle">Distance</h2>
-    <input type="number" id="statsInput" placeholder="0" inputmode="decimal">
-    <button class="btn btn-main" onclick="saveAndNext()">NEXT STATION</button>
+<!-- LIVE POPUP: FLOATING METRIC RECORD -->
+<div class="overlay" id="overlayInput">
+    <h2 id="overlayTitle">Record System Distance</h2>
+    <p style="text-align:center; font-size:0.8rem; color:var(--accent-purple); margin: 5px 0 0;" id="overlayRestCounter">Rest Counter Running...</p>
+    <input type="number" id="metricInput" placeholder="0" inputmode="decimal">
+    <button class="btn btn-main" onclick="submitLivePerformanceMetric()">Commit Block Score</button>
 </div>
 
 <script>
-    const program = [
-        { name: "Paddle Sprint", type: "Power", cue: "250m Max Effort. Snap the catch.", label: "Meters" },
-        { name: "Single Arm Row", type: "Strength", cue: "Heavy pull. Stabilize the core.", label: "Weight" },
-        { name: "Explosive Twist", type: "Core", cue: "30s Russian Twists. Feel the rotation.", label: "Reps" },
-        { name: "Steady Paddle", type: "Aerobic", cue: "500m Steady State. Rate 58-60.", label: "Time" },
-        { name: "Landmine Press", type: "Shoulder", cue: "Drive through the feet into the press.", label: "Weight" },
-        { name: "Grip Hang", type: "Endurance", cue: "Hold the bar. Do not drop.", label: "Seconds" },
-        { name: "Power Starts", type: "Speed", cue: "10-20-10 Start sequence simulation.", label: "Split" }
+    const protocols = [
+        { name: "Lactate Intervals", workDuration: 90, restDuration: 180, rounds: 4, type: "interval", spm: 28 },
+        { name: "Over-Distance Base", workDuration: 300, restDuration: 120, rounds: 3, type: "interval", spm: 20 },
+        { name: "Rate & Start Pyramid", workDuration: 180, restDuration: 240, rounds: 3, type: "interval", spm: 24 },
+        { name: "3-Min Max Test", workDuration: 180, restDuration: 0, rounds: 1, type: "test", spm: 32 }
     ];
 
-    let currentIdx = 0;
-    let timerStart, timerInt, elapsed = 0, isRunning = false;
-    let sessionData = [];
+    let currentWorkoutIdx = 0;
+    let currentRound = 1;
+    let timerInt = null;
+    let metroInt = null;
+    let timeRemaining = 90;
+    let isRunning = false;
+    let isRestPhase = false;
+    let performanceHistory = JSON.parse(localStorage.getItem('threeMinEngineProLogs')) || [];
 
-    const dotsContainer = document.getElementById('dots');
-    program.forEach(() => {
-        const d = document.createElement('div');
-        d.className = 'dot';
-        dotsContainer.appendChild(d);
-    });
-
-    function updateDisplay() {
-        const move = program[currentIdx];
-        document.getElementById('moveName').innerText = move.name;
-        document.getElementById('typeLabel').innerText = move.type;
-        document.getElementById('cueText').innerText = move.cue;
-        
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((d, i) => {
-            d.className = 'dot';
-            if(i < currentIdx) d.classList.add('done');
-            if(i === currentIdx) d.classList.add('active');
-        });
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq = 580, duration = 0.1) {
+        try {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.frequency.value = freq;
+            osc.type = "sine";
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {}
     }
 
-    function toggleTimer() {
-        const btn = document.getElementById('actionBtn');
+    function updateDamperDisplay() {
+        const val = document.getElementById('damperSlider').value;
+        document.getElementById('damperVal').innerText = val;
+    }
+
+    function switchView(view) {
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        if(view === 'live') {
+            document.getElementById('liveView').classList.add('active');
+            document.getElementById('tabLive').classList.add('active');
+        } else {
+            document.getElementById('manualView').classList.add('active');
+            document.getElementById('tabManual').classList.add('active');
+        }
+    }
+
+    function setWorkout(idx, element) {
+        if (isRunning) return;
+        currentWorkoutIdx = idx;
+        currentRound = 1;
+        isRestPhase = false;
+        
+        document.querySelectorAll('.select-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+
+        const active = protocols[currentWorkoutIdx];
+        timeRemaining = active.workDuration;
+        updateClockUI(timeRemaining);
+        document.getElementById('roundLabel').innerText = `Round 1 of ${active.rounds}`;
+        document.getElementById('spmLabel').innerText = `SPM Target: ${active.spm}`;
+        document.getElementById('phaseLabel').innerText = "Standby";
+        document.getElementById('phaseLabel').style.color = "var(--text-dim)";
+        document.getElementById('clockDisplay').style.color = "var(--text)";
+        document.getElementById('cueDisplay').innerText = "Click launch to begin continuous operation framework.";
+    }
+
+    function updateClockUI(seconds) {
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        document.getElementById('clockDisplay').innerText = `${m}:${s}`;
+        
+        const modalRestCounter = document.getElementById('overlayRestCounter');
+        if (isRestPhase) {
+            modalRestCounter.innerText = `Rest Clock Running in Background: ${m}:${s}`;
+        } else {
+            modalRestCounter.innerText = "System in Active Sprint Mode";
+        }
+    }
+
+    function startMetronome(spm) {
+        if (metroInt) clearInterval(metroInt);
+        if (spm === 0) return;
+        const intervalMs = (60 / spm) * 1000;
+        const metroDot = document.getElementById('metroDot');
+
+        metroInt = setInterval(() => {
+            if (isRunning && !isRestPhase) {
+                metroDot.classList.add('pulse');
+                playBeep(400, 0.05);
+                setTimeout(() => metroDot.classList.remove('pulse'), 100);
+            }
+        }, intervalMs);
+    }
+
+    function handlePrimaryAction() {
+        const mainBtn = document.getElementById('primaryBtn');
         if (!isRunning) {
             isRunning = true;
-            timerStart = Date.now() - elapsed;
-            timerInt = setInterval(updateTime, 100);
-            btn.innerText = "FINISH";
-            btn.style.background = "#262626";
-            btn.style.boxShadow = "none";
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('resetBtn').style.display = 'block';
+            document.getElementById('selectorCard').style.opacity = '0.3';
+            mainBtn.innerText = "STOP TIMER";
+            mainBtn.style.background = "#374151";
+            timerInt = setInterval(runTick, 1000);
+            startMetronome(protocols[currentWorkoutIdx].spm);
+            playBeep(650, 0.4);
         } else {
-            stopTimer();
+            pauseEngine();
         }
     }
 
-    function updateTime() {
-        elapsed = Date.now() - timerStart;
-        const total = elapsed / 1000;
-        const m = Math.floor(total / 60).toString().padStart(2, '0');
-        const s = Math.floor(total % 60).toString().padStart(2, '0');
-        const ms = Math.floor((total % 1) * 10);
-        document.getElementById('timer').innerText = `${m}:${s}.${ms}`;
+    function runTick() {
+        timeRemaining--;
+        updateClockUI(timeRemaining);
+
+        const currentProto = protocols[currentWorkoutIdx];
+
+        if (!isRestPhase) {
+            let activeSpm = currentProto.spm;
+            if (currentProto.type === "test") {
+                const elapsed = currentProto.workDuration - timeRemaining;
+                if (elapsed <= 30) {
+                    shiftPhaseUI("Phase 1: Start Burst", "var(--accent-blue)", "5-7 rapid high-rate strokes to break flywheel inertia, then find catch glide.");
+                    activeSpm = 36;
+                } else if (elapsed <= 120) {
+                    shiftPhaseUI("Phase 2: Core Cruise", "var(--accent-red)", "Maintain structural posture. Pivot deep from your hips with clean sequencing.");
+                    activeSpm = 30;
+                } else {
+                    shiftPhaseUI("Phase 3: Empty Vault", "var(--accent-green)", "Shorten length slightly, maximize stroke rate velocity. Empty the tank completely.");
+                    activeSpm = 35;
+                }
+            } else {
+                shiftPhaseUI(`ROUND ${currentRound} WORK`, "var(--accent-red)", "Drive with intensity. Maintain stroke pacing across the piece.");
+            }
+            document.getElementById('spmLabel').innerText = `SPM Target: ${activeSpm}`;
+
+            if (timeRemaining <= 0) {
+                playBeep(440, 0.6);
+                openLiveLogPopup();
+                
+                if (currentRound < currentProto.rounds && currentProto.restDuration > 0) {
+                    isRestPhase = true;
+                    timeRemaining = currentProto.restDuration;
+                    updateClockUI(timeRemaining);
+                    startMetronome(0); // Kill metronome during recovery rest
+                } else {
+                    clearInterval(timerInt);
+                    clearInterval(metroInt);
+                    finishWorkoutSequence();
+                }
+            }
+        } else {
+            shiftPhaseUI(`ROUND ${currentRound} RECOVERY`, "var(--accent-blue)", "Light ratio paddling. Focus on deep oxygen uptake recovery.");
+            document.getElementById('spmLabel').innerText = `SPM Target: REST PADDLE`;
+
+            if (timeRemaining <= 0) {
+                playBeep(800, 0.5);
+                isRestPhase = false;
+                currentRound++;
+                document.getElementById('roundLabel').innerText = `Round ${currentRound} of ${currentProto.rounds}`;
+                timeRemaining = currentProto.workDuration;
+                updateClockUI(timeRemaining);
+                document.getElementById('overlayInput').style.display = 'none';
+                startMetronome(currentProto.spm);
+            }
+        }
     }
 
-    function stopTimer() {
-        clearInterval(timerInt);
-        isRunning = false;
-        document.getElementById('actionBtn').style.display = 'none';
-        document.getElementById('logBtn').style.display = 'block';
+    function shiftPhaseUI(label, color, cue) {
+        const lbl = document.getElementById('phaseLabel');
+        lbl.innerText = label; lbl.style.color = color;
+        document.getElementById('clockDisplay').style.color = color;
+        document.getElementById('cueDisplay').innerText = cue;
     }
 
-    function openLog() {
-        document.getElementById('logTitle').innerText = `Log ${program[currentIdx].label}`;
-        document.getElementById('logView').style.display = 'flex';
-        document.getElementById('statsInput').focus();
+    function openLiveLogPopup() {
+        document.getElementById('overlayTitle').innerText = `Logged Distance (Round ${currentRound})`;
+        document.getElementById('overlayInput').style.display = 'flex';
+        document.getElementById('metricInput').focus();
     }
 
-    function saveAndNext() {
-        const val = document.getElementById('statsInput').value || "0";
-        const time = document.getElementById('timer').innerText;
+    function submitLivePerformanceMetric() {
+        let meters = parseInt(document.getElementById('metricInput').value) || 0;
         
-        sessionData.push({
-            name: program[currentIdx].name,
-            score: val,
-            time: time
+        // SURPRISE: Damper Modifier Impact Algorithm 
+        const damperVal = parseInt(document.getElementById('damperSlider').value);
+        const modifier = 1 + ((damperVal - 5) * 0.015);
+        meters = Math.round(meters * modifier);
+
+        const totalDuration = protocols[currentWorkoutIdx].workDuration;
+        const min = Math.floor(totalDuration / 60);
+        const sec = totalDuration % 60;
+        const timeStr = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+        
+        commitLogEntry(`${protocols[currentWorkoutIdx].name} (R${currentRound})`, meters, timeStr, totalDuration);
+        document.getElementById('overlayInput').style.display = 'none';
+        document.getElementById('metricInput').value = '';
+    }
+
+    function pauseEngine() {
+        isRunning = false;
+        clearInterval(timerInt);
+        clearInterval(metroInt);
+        document.getElementById('primaryBtn').innerText = "RESUME SPRINT CYCLE";
+        document.getElementById('primaryBtn').style.background = "var(--accent-red)";
+    }
+
+    function resetEngine() {
+        clearInterval(timerInt);
+        clearInterval(metroInt);
+        isRunning = false;
+        isRestPhase = false;
+        currentRound = 1;
+        
+        const active = protocols[currentWorkoutIdx];
+        timeRemaining = active.workDuration;
+        updateClockUI(timeRemaining);
+        
+        document.getElementById('selectorCard').style.opacity = '1';
+        document.getElementById('resetBtn').style.display = 'none';
+        document.getElementById('clockDisplay').style.color = 'var(--text)';
+        document.getElementById('phaseLabel').style.color = 'var(--text-dim)';
+        document.getElementById('phaseLabel').innerText = "Ready";
+        document.getElementById('roundLabel').innerText = `Round 1 of ${active.rounds}`;
+        document.getElementById('spmLabel').innerText = `SPM Target: ${active.spm}`;
+        document.getElementById('overlayInput').style.display = 'none';
+        
+        const mainBtn = document.getElementById('primaryBtn');
+        mainBtn.innerText = "LAUNCH PIECE";
+        mainBtn.style.background = "var(--accent-red)";
+    }
+
+    function finishWorkoutSequence() {
+        isRunning = false;
+        shiftPhaseUI("ROUTINE COMPLETE", "var(--accent-green)", "All training engine items cleared. Master metrics updated.");
+        document.getElementById('primaryBtn').innerText = "ROUTINE FINISHED";
+        document.getElementById('primaryBtn').style.background = "var(--accent-purple)";
+    }
+
+    function calculateSplit(meters, totalSeconds) {
+        if (!meters || !totalSeconds) return "00:00.0";
+        const splitSecs = (500 * totalSeconds) / meters;
+        const m = Math.floor(splitSecs / 60);
+        const s = Math.floor(splitSecs % 60);
+        const ms = Math.floor((splitSecs % 1) * 10);
+        return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${ms}`;
+    }
+
+    function submitManualLog() {
+        const name = document.getElementById('manName').value;
+        const meters = parseInt(document.getElementById('manDistance').value) || 0;
+        const timeStr = document.getElementById('manTime').value || "03:00";
+        
+        const parts = timeStr.split(':');
+        let totalSeconds = 180;
+        if(parts.length === 2) {
+            totalSeconds = (parseInt(parts[0]) * 60) + parseInt(parts[1]);
+        }
+
+        commitLogEntry(name, meters, timeStr, totalSeconds);
+        document.getElementById('manDistance').value = '';
+        document.getElementById('manTime').value = '';
+        switchView('live');
+    }
+
+    function generateScientificInsights(name, meters, totalSeconds, splitStr) {
+        const splitSecs = (500 * totalSeconds) / meters;
+        let profileText = "";
+        
+        // Surprise Predictive System calculations
+        const est2KSecs = splitSecs * 4 * 1.06; 
+        const ceilingSecs = splitSecs * 0.88;
+
+        const formatPredictiveSecs = (s) => {
+            const min = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            const ms = Math.floor((s % 1) * 10);
+            return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${ms}`;
+        };
+
+        document.getElementById('matrix2K').innerText = `${formatPredictiveSecs(est2KSecs)}/500m`;
+        document.getElementById('matrixCeiling').innerText = `${formatPredictiveSecs(ceilingSecs)}/500m`;
+        
+        if (name.includes("3-Min") || totalSeconds <= 180) {
+            profileText = `<strong>[Anaerobic Glycolytic Profile]</strong> Your calculated pace of <strong>${splitStr}/500m</strong> indicates high neuromuscular coordination. Science indicates that a 3-minute max effort relies heavily (~60-70%) on aerobic pathways, despite the intense burn. <br><br>🎯 <strong>Evidence Improvement:</strong> Focus on increasing peak power output via 10-second maximum wattage bursts at high drag resistance during warmups.`;
+        } else if (totalSeconds >= 300) {
+            profileText = `<strong>[Aerobic Ventilatory Threshold Profile]</strong> Submaximal base effort detected at <strong>${splitStr}/500m</strong>. Studies on elite rowing athletes confirm that threshold development requires high, sustained stroke efficiency without excessive spikes in blood lactate. <br><br>🎯 <strong>Evidence Improvement:</strong> Adhere strictly to a polarized training volume split (80% steady state base below anaerobic threshold / 20% high-intensity HIIT).`;
+        } else {
+            profileText = `<strong>[Lactate Clearance Interval Profile]</strong> Interval output registered at <strong>${splitStr}/500m</strong>. Repeated work blocks interspaced with structured rest challenge your fast-twitch motor units to clear metabolic byproducts while maintaining a full structural stroke length.<br><br>🎯 <strong>Evidence Improvement:</strong> Focus on aggressive hip hinge sequencing and dynamic handle velocity at the finish during the final third of the interval to compensate for fatigue.`;
+        }
+
+        const card = document.getElementById('insightsCard');
+        const box = document.getElementById('insightsDataContent');
+        box.innerHTML = profileText;
+        card.style.display = "block";
+    }
+
+    function commitLogEntry(name, meters, timeDisplay, totalSeconds) {
+        const dateObj = new Date();
+        const formattedDate = dateObj.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+        const splitCalculated = calculateSplit(meters, totalSeconds);
+
+        performanceHistory.push({
+            name: name,
+            meters: meters,
+            time: timeDisplay,
+            split: splitCalculated,
+            date: formattedDate,
+            timestamp: dateObj.getTime()
         });
 
-        updateHistoryUI();
-        document.getElementById('logView').style.display = 'none';
-        document.getElementById('statsInput').value = '';
-        
-        if(currentIdx < program.length - 1) {
-            nextMove();
-        } else {
-            finishWorkout();
-        }
+        localStorage.setItem('threeMinEngineProLogs', JSON.stringify(performanceHistory));
+        renderMetricsDashboard();
+        generateScientificInsights(name, meters, totalSeconds, splitCalculated);
     }
 
-    function updateHistoryUI() {
-        const container = document.getElementById('historyBody');
-        container.innerHTML = sessionData.map(item => `
-            <div class="history-row">
-                <span class="history-name">${item.name}</span>
-                <span class="history-val">${item.score} <small style="font-size:0.6rem; color:var(--text-dim)">(${item.time})</small></span>
+    function renderMetricsDashboard() {
+        const container = document.getElementById('historyLog');
+        if (performanceHistory.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: var(--text-dim); padding: 15px; font-size: 0.85rem;">No historical records mapped inside device storage.</div>`;
+            document.getElementById('weekMeters').innerText = "0m";
+            document.getElementById('weekCount').innerText = "0";
+            document.getElementById('rankBadge').innerText = "Novice Crew";
+            return;
+        }
+        
+        container.innerHTML = performanceHistory.map(log => `
+            <div class="log-item">
+                <div>
+                    <span class="log-name">${log.name}</span>
+                    <div class="log-sub">${log.date} • Duration: ${log.time}</div>
+                </div>
+                <div class="log-meta">
+                    <div class="log-score">${log.meters}m</div>
+                    <div class="log-split">/${log.split}</div>
+                </div>
             </div>
         `).reverse().join('');
-    }
 
-    function nextMove() {
-        currentIdx++;
-        elapsed = 0;
-        document.getElementById('timer').innerText = "00:00.0";
-        document.getElementById('actionBtn').style.display = 'block';
-        document.getElementById('actionBtn').innerText = "START PIECE";
-        document.getElementById('actionBtn').style.background = "var(--dragon-red)";
-        document.getElementById('actionBtn').style.boxShadow = "0 10px 20px var(--dragon-red-glow)";
-        document.getElementById('logBtn').style.display = 'none';
-        updateDisplay();
-    }
+        const oneWeekAgo = new Date().getTime() - (7 * 24 * 60 * 60 * 1000);
+        let totalMetersThisWeek = 0;
+        let piecesThisWeek = 0;
 
-    function finishWorkout() {
-        document.getElementById('moveName').innerText = "Session Complete";
-        document.getElementById('typeLabel').innerText = "Finished";
-        document.getElementById('cueText').innerText = "All stations cleared. Review your performance below.";
-        document.getElementById('actionBtn').style.display = 'none';
-        document.getElementById('logBtn').style.display = 'none';
-        document.getElementById('summaryBtn').style.display = 'block';
-        
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach(d => d.className = 'dot done');
-    }
-
-    function saveRecord() {
-        const date = new Date().toLocaleDateString();
-        let summary = `DRAGON BOAT SESSION - ${date}\n\n`;
-        sessionData.forEach(d => {
-            summary += `${d.name}: ${d.score} (Time: ${d.time})\n`;
+        performanceHistory.forEach(item => {
+            const timestamp = item.timestamp || 0;
+            if(timestamp > oneWeekAgo) {
+                totalMetersThisWeek += item.meters;
+                piecesThisWeek++;
+            }
         });
-        
-        // Simple clipboard copy
-        navigator.clipboard.writeText(summary).then(() => {
-            alert("Session record copied to clipboard! You can now paste it into your notes or training app.");
-        });
+
+        document.getElementById('weekMeters').innerText = `${totalMetersThisWeek}m`;
+        document.getElementById('weekCount').innerText = piecesThisWeek;
+
+        // Surprise Rank Logic Game Changer
+        const rankBadge = document.getElementById('rankBadge');
+        if (totalMetersThisWeek > 5000) {
+            rankBadge.innerText = "Elite Oarsman";
+            rankBadge.style.background = "rgba(16, 185, 129, 0.2)";
+            rankBadge.style.color = "var(--accent-green)";
+        } else if (totalMetersThisWeek > 2000) {
+            rankBadge.innerText = "Varsity Engine";
+            rankBadge.style.background = "rgba(59, 130, 246, 0.2)";
+            rankBadge.style.color = "var(--accent-blue)";
+        } else {
+            rankBadge.innerText = "Novice Crew";
+            rankBadge.style.background = "rgba(168, 85, 247, 0.15)";
+            rankBadge.style.color = "var(--accent-purple)";
+        }
     }
 
-    updateDisplay();
+    function exportToCSV() {
+        if(performanceHistory.length === 0) return alert("Ledger Empty.");
+        let csvContent = "data:text/csv;charset=utf-8,Date,Routine,Distance(m),Duration,500m Split\n";
+        performanceHistory.forEach(r => {
+            csvContent += `"${r.date}","${r.name}",${r.meters},"${r.time}","${r.split}"\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "RowingEngine_Ledger.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function clearLogs() {
+        if(confirm("Wipe all historical local database entries?")) {
+            performanceHistory = [];
+            localStorage.removeItem('threeMinEngineProLogs');
+            document.getElementById('insightsCard').style.display = "none";
+            renderMetricsDashboard();
+        }
+    }
+
+    // Initialize layout
+    timeRemaining = protocols[0].workDuration;
+    document.getElementById('roundLabel').innerText = `Round 1 of ${protocols[0].rounds}`;
+    renderMetricsDashboard();
 </script>
 </body>
 </html>
