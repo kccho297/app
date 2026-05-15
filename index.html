@@ -1,11 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Website</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dragon Boat Elite Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dragon-red: #ef4444;
+            --dragon-red-glow: rgba(239, 68, 68, 0.4);
+            --water-blue: #3b82f6;
+            --bg: #050505;
+            --card: #121212;
+            --text: #ffffff;
+            --text-dim: #737373;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            color: var(--text); 
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            background-image: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #050505 80%);
+        }
+
+        .app-container { 
+            width: 100%;
+            max-width: 480px; 
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header Area */
+        header { text-align: center; margin-bottom: 10px; }
+        header h1 { 
+            margin: 0; font-size: 1.1rem; letter-spacing: 5px; font-weight: 900; 
+            background: linear-gradient(to right, #fff, var(--dragon-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Session Progress */
+        .progress-container {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .dot { 
+            height: 4px; flex: 1; background: #262626; border-radius: 10px; 
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .dot.active { background: var(--dragon-red); box-shadow: 0 0 12px var(--dragon-red-glow); }
+        .dot.done { background: var(--text-dim); }
+
+        /* The Training Deck */
+        .workout-card { 
+            background: var(--card); 
+            border-radius: 35px; 
+            padding: 40px 25px; 
+            text-align: center; 
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .station-badge { 
+            background: var(--glass);
+            color: var(--water-blue); 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            padding: 6px 14px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .current-move { font-size: 2.8rem; margin: 20px 0 10px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+        .technique-cue { color: var(--text-dim); font-size: 1rem; line-height: 1.5; margin-bottom: 30px; }
+
+        /* Modern Timer */
+        .timer-wrap { margin-bottom: 30px; }
+        .timer { 
+            font-size: 5rem; font-weight: 300; font-variant-numeric: tabular-nums; 
+            color: #fff; letter-spacing: -2px;
+        }
+
+        /* Action Buttons */
+        .btn { 
+            width: 100%; padding: 22px; border-radius: 24px; border: none; font-size: 1.2rem; 
+            font-weight: 700; cursor: pointer; transition: 0.3s; 
+        }
+        .btn-main { 
+            background: var(--dragon-red); color: white; 
+            box-shadow: 0 10px 20px var(--dragon-red-glow);
+        }
+        .btn-main:active { transform: scale(0.97); filter: brightness(1.2); }
+        
+        .btn-log { 
+            background: #fff; color: #000; 
+            display: none;
+        }
+
+        .btn-summary {
+            background: var(--water-blue); color: white;
+            display: none; margin-top: 20px;
+        }
+
+        /* History List */
+        .log-section { margin-top: 10px; }
+        .log-header { font-size: 0.8rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 0 10px 10px; }
+        .history-card { background: var(--glass); border-radius: 20px; padding: 5px; border: 1px solid var(--border); }
+        .history-row { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-bottom: 1px solid var(--border); 
+        }
+        .history-row:last-child { border: none; }
+        .history-name { font-weight: 600; font-size: 0.95rem; }
+        .history-val { color: var(--water-blue); font-weight: 700; font-size: 1rem; }
+
+        /* Modal Glass */
+        #logView { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            display: none; flex-direction: column; justify-content: center; padding: 40px; z-index: 100; 
+        }
+        #logView h2 { font-size: 0.9rem; text-transform: uppercase; color: var(--text-dim); text-align: center; }
+        input { 
+            background: transparent; border: none; border-bottom: 3px solid var(--dragon-red); color: white; 
+            padding: 20px; font-size: 4rem; text-align: center; margin: 20px 0; outline: none; width: 100%;
+            font-weight: 900;
+        }
+
+    </style>
 </head>
 <body>
-  <h1>Hello World</h1>
+
+<div class="app-container">
+    <header><h1>PADDLE PRO ELITE</h1></header>
+
+    <div class="progress-container" id="dots"></div>
+
+    <div class="workout-card">
+        <div class="station-badge" id="typeLabel">Ready</div>
+        <div class="current-move" id="moveName">Elite Session</div>
+        <div class="technique-cue" id="cueText">Prepare for high-intensity dragon boat specific rotation.</div>
+
+        <div class="timer-wrap">
+            <div class="timer" id="timer">00:00.0</div>
+        </div>
+
+        <button class="btn btn-main" id="actionBtn" onclick="toggleTimer()">START PIECE</button>
+        <button class="btn btn-log" id="logBtn" onclick="openLog()">LOG DATA</button>
+        
+        <button class="btn btn-summary" id="summaryBtn" onclick="saveRecord()">SAVE & EXPORT RECORD</button>
+    </div>
+
+    <div class="log-section">
+        <div class="log-header">Live Session Data</div>
+        <div class="history-card" id="historyBody">
+            <div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 0.9rem;">No data yet. Complete a piece.</div>
+        </div>
+    </div>
+</div>
+
+<div id="logView">
+    <h2 id="logTitle">Distance</h2>
+    <input type="number" id="statsInput" placeholder="0" inputmode="decimal">
+    <button class="btn btn-main" onclick="saveAndNext()">NEXT STATION</button>
+</div>
+
+<script>
+    const program = [
+        { name: "Paddle Sprint", type: "Power", cue: "250m Max Effort. Snap the catch.", label: "Meters" },
+        { name: "Single Arm Row", type: "Strength", cue: "Heavy pull. Stabilize the core.", label: "Weight" },
+        { name: "Explosive Twist", type: "Core", cue: "30s Russian Twists. Feel the rotation.", label: "Reps" },
+        { name: "Steady Paddle", type: "Aerobic", cue: "500m Steady State. Rate 58-60.", label: "Time" },
+        { name: "Landmine Press", type: "Shoulder", cue: "Drive through the feet into the press.", label: "Weight" },
+        { name: "Grip Hang", type: "Endurance", cue: "Hold the bar. Do not drop.", label: "Seconds" },
+        { name: "Power Starts", type: "Speed", cue: "10-20-10 Start sequence simulation.", label: "Split" }
+    ];
+
+    let currentIdx = 0;
+    let timerStart, timerInt, elapsed = 0, isRunning = false;
+    let sessionData = [];
+
+    const dotsContainer = document.getElementById('dots');
+    program.forEach(() => {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        dotsContainer.appendChild(d);
+    });
+
+    function updateDisplay() {
+        const move = program[currentIdx];
+        document.getElementById('moveName').innerText = move.name;
+        document.getElementById('typeLabel').innerText = move.type;
+        document.getElementById('cueText').innerText = move.cue;
+        
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((d, i) => {
+            d.className = 'dot';
+            if(i < currentIdx) d.classList.add('done');
+            if(i === currentIdx) d.classList.add('active');
+        });
+    }
+
+    function toggleTimer() {
+        const btn = document.getElementById('actionBtn');
+        if (!isRunning) {
+            isRunning = true;
+            timerStart = Date.now() - elapsed;
+            timerInt = setInterval(updateTime, 100);
+            btn.innerText = "FINISH";
+            btn.style.background = "#262626";
+            btn.style.boxShadow = "none";
+        } else {
+            stopTimer();
+        }
+    }
+
+    function updateTime() {
+        elapsed = Date.now() - timerStart;
+        const total = elapsed / 1000;
+        const m = Math.floor(total / 60).toString().padStart(2, '0');
+        const s = Math.floor(total % 60).toString().padStart(2, '0');
+        const ms = Math.floor((total % 1) * 10);
+        document.getElementById('timer').innerText = `${m}:${s}.${ms}`;
+    }
+
+    function stopTimer() {
+        clearInterval(timerInt);
+        isRunning = false;
+        document.getElementById('actionBtn').style.display = 'none';
+        document.getElementById('logBtn').style.display = 'block';
+    }
+
+    function openLog() {
+        document.getElementById('logTitle').innerText = `Log ${program[currentIdx].label}`;
+        document.getElementById('logView').style.display = 'flex';
+        document.getElementById('statsInput').focus();
+    }
+
+    function saveAndNext() {
+        const val = document.getElementById('statsInput').value || "0";
+        const time = document.getElementById('timer').innerText;
+        
+        sessionData.push({
+            name: program[currentIdx].name,
+            score: val,
+            time: time
+        });
+
+        updateHistoryUI();
+        document.getElementById('logView').style.display = 'none';
+        document.getElementById('statsInput').value = '';
+        
+        if(currentIdx < program.length - 1) {
+            nextMove();
+        } else {
+            finishWorkout();
+        }
+    }
+
+    function updateHistoryUI() {
+        const container = document.getElementById('historyBody');
+        container.innerHTML = sessionData.map(item => `
+            <div class="history-row">
+                <span class="history-name">${item.name}</span>
+                <span class="history-val">${item.score} <small style="font-size:0.6rem; color:var(--text-dim)">(${item.time})</small></span>
+            </div>
+        `).reverse().join('');
+    }
+
+    function nextMove() {
+        currentIdx++;
+        elapsed = 0;
+        document.getElementById('timer').innerText = "00:00.0";
+        document.getElementById('actionBtn').style.display = 'block';
+        document.getElementById('actionBtn').innerText = "START PIECE";
+        document.getElementById('actionBtn').style.background = "var(--dragon-red)";
+        document.getElementById('actionBtn').style.boxShadow = "0 10px 20px var(--dragon-red-glow)";
+        document.getElementById('logBtn').style.display = 'none';
+        updateDisplay();
+    }
+
+    function finishWorkout() {
+        document.getElementById('moveName').innerText = "Session Complete";
+        document.getElementById('typeLabel').innerText = "Finished";
+        document.getElementById('cueText').innerText = "All stations cleared. Review your performance below.";
+        document.getElementById('actionBtn').style.display = 'none';
+        document.getElementById('logBtn').style.display = 'none';
+        document.getElementById('summaryBtn').style.display = 'block';
+        
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach(d => d.className = 'dot done');
+    }
+
+    function saveRecord() {
+        const date = new Date().toLocaleDateString();
+        let summary = `DRAGON BOAT SESSION - ${date}\n\n`;
+        sessionData.forEach(d => {
+            summary += `${d.name}: ${d.score} (Time: ${d.time})\n`;
+        });
+        
+        // Simple clipboard copy
+        navigator.clipboard.writeText(summary).then(() => {
+            alert("Session record copied to clipboard! You can now paste it into your notes or training app.");
+        });
+    }
+
+    updateDisplay();
+</script>
 </body>
 </html>
